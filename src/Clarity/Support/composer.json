@@ -20,7 +20,7 @@
         "paragonie/random_compat": "~1.4|~2.0",
         "clarity/contracts": "1.4.*",
         "clarity/exceptions": "1.4.*",
-        "robmorgan/phinx": "0.6.*"
+        "robmorgan/phinx": "0.9.*"
     },
     "autoload": {
         "psr-4": {
