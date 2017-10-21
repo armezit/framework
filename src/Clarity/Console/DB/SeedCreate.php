@@ -11,6 +11,8 @@
 namespace Clarity\Console\DB;
 
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Question\ChoiceQuestion;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * Create a database seeder.
@@ -38,7 +40,7 @@ class SeedCreate extends AbstractCommand
     public function slash()
     {
         # get the seed path from the config
-        $path = realpath($this->getDefaultConfig()->getSeedPath());
+        $path = realpath($this->getSeedPath());
 
         if (! file_exists($path)) {
             if ($this->confirm('Create migrations directory? [y]/n ', true)) {
@@ -107,4 +109,64 @@ class SeedCreate extends AbstractCommand
 
         return $file;
     }
+
+    /**
+     * Get the confirmation question asking if the user wants to create the
+     * seeds directory.
+     *
+     * @return ConfirmationQuestion
+     */
+    protected function getCreateSeedDirectoryQuestion()
+    {
+        return new ConfirmationQuestion('Create seeds directory? [y]/n ', true);
+    }
+
+    /**
+     * Get the question that allows the user to select which seed path to use.
+     *
+     * @param string[] $paths
+     * @return ChoiceQuestion
+     */
+    protected function getSelectSeedPathQuestion(array $paths)
+    {
+        return new ChoiceQuestion('Which seeds path would you like to use?', $paths, 0);
+    }
+
+    /**
+     * Returns the seed path to create the seeder in.
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function getSeedPath()
+    {
+        $paths = $this->getDefaultConfig()->getSeedPaths();
+
+        // No paths? That's a problem.
+        if (empty($paths)) {
+            throw new \Exception('No seed paths set in your Phinx configuration file.');
+        }
+
+        $paths = \Phinx\Util\Util::globAll($paths);
+
+        if (empty($paths)) {
+            throw new \Exception(
+                'You probably used curly braces to define seed path in your Phinx configuration file, ' .
+                'but no directories have been matched using this pattern. ' .
+                'You need to create a seed directory manually.'
+            );
+        }
+
+        // Only one path set, so select that:
+        if (1 === count($paths)) {
+            return array_shift($paths);
+        }
+
+        // Ask the user which of their defined paths they'd like to use:
+        $helper = $this->getHelper('question');
+        $question = $this->getSelectSeedPathQuestion($paths);
+
+        return $helper->ask($this->getInput(), $this->getOutput(), $question);
+    }
 }
+
