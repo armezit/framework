@@ -207,7 +207,7 @@ abstract class AbstractCommand extends Brood
     protected function loadManager()
     {
         if (null === $this->getManager()) {
-            $manager = new Manager($this->getDefaultConfig(), $this->getOutput());
+            $manager = new Manager($this->getDefaultConfig(), $this->getInput(), $this->getOutput());
             $this->setManager($manager);
         }
     }
